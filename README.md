@@ -5,15 +5,10 @@ Magisk Detector
 
 It's time to end the game.
 
-是时候结束游戏了。
-
-
 Getting Started
 ---------------
 
 To build this project, use the `gradlew aR` command or use "Import Project" in Android Studio.
-
-构建此项目，请使用`gradlew aR`命令，或在Android Studio中导入项目。
 
 License
 -------
