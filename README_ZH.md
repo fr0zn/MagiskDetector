@@ -1,29 +1,27 @@
 Magisk Detector
 ==============================
 
-反Magisk Hide
+Anti Magisk Hide
 -------------
-Magisk Hide的核心是挂载命名空间，magiskd等待zygote子进程的挂载命名空间与父进程分离后，对子进程卸载所有Magisk挂载的内容。由于挂载命名空间的特性，卸载操作会影响这个子进程的子进程，但不会影响zygote。zygote是所有应用程序进程的父进程，如果zygote被Magisk Hide处理，所有应用都会丢失root。
-zygote启动新进程时有一个`MountMode`参数，当它是`Zygote.MOUNT_EXTERNAL_NONE`时，新进程不挂载存储空间，也就没有挂载命名空间分离步骤。
+The core of Magisk Hide is to mount the namespace. After Magiskd waits for the separation of the mount namespace of the zygote child process from the parent process, it unloads all Magisk mounted content from the child process. Due to the nature of the mounting namespace, the unload operation will affect the child process of this child process, but will not affect zygote. zygote is the parent process of all application processes. If zygote is processed by Magisk Hide, all applications will lose root. When zygote starts a new process, there is a `MountMode` parameter. When it is `Zygote.MOUNT_EXTERNAL_NONE`, the new process does not mount the storage space, so there is no mounting namespace separation step.
 
-符合的情况有两种，一个是应用appops的读取存储空间op为忽略，一个是该进程为隔离进程。前者应用本身无法操作，后者自Android4.1开始支持。
-另外，隔离进程还有一个有趣的特性，就是随机UID，它每次运行时的UID都不一样。这个有趣的特性导致了在检测挂载命名空间之前，Magisk Hide就跳过了这个进程，不会处理它。
+There are two cases of compliance, one is that the appops read storage space op is ignored, and the other is that the process is an isolated process. The former application itself cannot be operated, and the latter has been supported since Android 4.1. In addition, an interesting feature of the isolation process is the random UID, which is different every time it runs. This interesting feature causes Magisk Hide to skip this process and not process it before detecting the mounted namespace.
 
-检测Magisk模块
+Detect Magisk module
 -------------
-Magisk模块虽然能在文件系统上隐藏，但修改内容已经载入进程内存，检查进程的maps就能发现。maps显示的数据包含载入文件所在的设备。Magisk模块会导致某些文件的路径在system分区或vendor分区，但显示的设备位置却是data分区。
+Although the Magisk module can be hidden on the file system, the modified content has been loaded into the process memory, and it can be found by checking the process maps. The data displayed by maps contains the device where the file is loaded. The Magisk module will cause the path of some files to be in the system partition or vendor partition, but the device location displayed is the data partition.
 
-检测MagiskSU
+Detect MagiskSU
 ------------
-正常情况下，应用不能连接不是自己建立的socket，但Magisk修改了SELinux。所有应用都能连接magisk域的socket。每个Magisk的su进程都会建立一个socket，尝试连接所有socket，没有被SELinux拒绝的socket数量，就是su进程的数量。此检测方法可靠程度完全取决于SELinux规则的严格程度，Android版本太低或太高都会出问题。
+Under normal circumstances, applications cannot connect to sockets that were not created by themselves, but Magisk modified SELinux. All applications can connect to sockets in the magisk domain. Each Magisk su process will create a socket and try to connect all the sockets. The number of sockets that are not rejected by SELinux is the number of su processes. The reliability of this detection method depends entirely on the strictness of the SELinux rules. If the Android version is too low or too high, there will be problems.
 
-测试SELinux政策
+Test SELinux policy
 --------------
-SU软件在修改SELinux政策时一定要注意以下原则，否则会留下安全漏洞和被检测的途径。
-- 来源域和目标域，有一方是su程序自定义域，添加规则是安全的；
-- 双方都是非应用程序域的，需要有合理且必要的原因；
-- 有一方是应用域，添加规则非常危险。如果是来源域，应该拒绝添加。
+SU software must pay attention to the following principles when modifying the SELinux policy, otherwise it will leave security loopholes and ways to be detected.
+- One of the source domain and the target domain is the custom domain of the su program, and it is safe to add rules;
+- Both parties are non-application domains and need to have reasonable and necessary reasons;
+- One side is the application domain, and adding rules is very dangerous. If it is the source domain, you should refuse to add it.
 
-检测init.rc修改
+Detect init.rc modification
 --------------
-随机只有在无法遍历的情况下才有效。如果可以遍历，使用统计方法即可准确找出每次都不一样的东西。
+Randomness is only effective if it cannot be traversed. If it can be traversed, use statistical methods to find out exactly what is different every time.
