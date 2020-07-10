@@ -1,7 +1,7 @@
 Magisk Detector
 ==============================
 
-[细节（中文）](README_ZH.md)
+[Details](README_ZH.md)
 
 It's time to end the game.
 
